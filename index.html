@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        #chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #chat-messages {
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+        }
+
+        #chat-input {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #fff;
+        }
+
+        #message-input {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        #send-button {
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="chat-messages"></div>
+    <div id="chat-input">
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button id="send-button" onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    // function sendMessage() {
+    //     var messageInput = document.getElementById("message-input");
+    //     var message = messageInput.value.trim();
+
+    //     if (message !== "") {
+    //         var chatMessages = document.getElementById("chat-messages");
+    //         var newMessage = document.createElement("div");
+    //         newMessage.textContent = "You: " + message;
+    //         chatMessages.appendChild(newMessage);
+
+    //         // Clear the input field
+    //         messageInput.value = "";
+
+    //         // Simulate a response (replace this with actual logic)
+    //         simulateResponse();
+    //     }
+    // }
+
+    // function simulateResponse() {
+    //     var chatMessages = document.getElementById("chat-messages");
+    //     var newResponse = document.createElement("div");
+    //     newResponse.textContent = "Bot: This is a simulated response.";
+    //     chatMessages.appendChild(newResponse);
+
+    //     // Scroll to the bottom to show the latest messages
+    //     chatMessages.scrollTop = chatMessages.scrollHeight;
+    // }
+
+    async function sendMessage(){
+        var message = document.getElementById("message-input").value;
+        var response = await fetch("http://127.0.0.1:6677/stream_chat/", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({content: message})
+        })
+
+        var reader = response.body.getReader();
+        var decoder = new TextDecoder('utf-8');
+
+        reader.read().then(function processResult(result){
+            if(result.done) return;
+            let token = decoder.decode(result.value);
+
+            if(token.endsWith('.') || token.endsWith('!') || token.endsWith('?')) {
+                document.getElementById("chat-messages").innerHTML += token + "<br>";
+            }else{
+                document.getElementById("chat-messages").innerHTML += token + '';
+            }
+
+            return reader.read().then(processResult)
+        })
+    }
+</script>
+
+</body>
+</html>
